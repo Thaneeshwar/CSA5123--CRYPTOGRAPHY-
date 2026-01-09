@@ -1,0 +1,63 @@
+#include <stdio.h>
+#include <string.h>
+
+#define BS 8   // Block Size = 8 bytes (64 bits)
+
+/* Simple block cipher (XOR – demo only) */
+void encrypt_block(unsigned char *in, unsigned char *key, unsigned char *out) {
+    for (int i = 0; i < BS; i++)
+        out[i] = in[i] ^ key[i];
+}
+
+/* ECB Mode */
+void ECB(unsigned char *pt, unsigned char *key, int len) {
+    unsigned char ct[BS];
+    printf("\nECB Ciphertext: ");
+    for (int i = 0; i < len; i += BS) {
+        encrypt_block(pt + i, key, ct);
+        for (int j = 0; j < BS; j++) printf("%02X ", ct[j]);
+    }
+}
+
+/* CBC Mode */
+void CBC(unsigned char *pt, unsigned char *key, unsigned char *iv, int len) {
+    unsigned char ct[BS], temp[BS];
+    printf("\nCBC Ciphertext: ");
+    for (int i = 0; i < len; i += BS) {
+        for (int j = 0; j < BS; j++)
+            temp[j] = pt[i + j] ^ iv[j];
+        encrypt_block(temp, key, ct);
+        memcpy(iv, ct, BS);
+        for (int j = 0; j < BS; j++) printf("%02X ", ct[j]);
+    }
+}
+
+/* CFB Mode */
+void CFB(unsigned char *pt, unsigned char *key, unsigned char *iv, int len) {
+    unsigned char temp[BS], ct[BS];
+    printf("\nCFB Ciphertext: ");
+    for (int i = 0; i < len; i += BS) {
+        encrypt_block(iv, key, temp);
+        for (int j = 0; j < BS; j++)
+            ct[j] = pt[i + j] ^ temp[j];
+        memcpy(iv, ct, BS);
+        for (int j = 0; j < BS; j++) printf("%02X ", ct[j]);
+    }
+}
+
+int main() {
+    unsigned char plaintext[] = "NETWORKSECURITY"; // multiple of block size
+    unsigned char key[BS] = "KEY12345";
+    unsigned char iv[BS]  = "INITVECT";
+    int len = strlen(plaintext);
+
+    ECB(plaintext, key, len);
+
+    memcpy(iv, "INITVECT", BS);
+    CBC(plaintext, key, iv, len);
+
+    memcpy(iv, "INITVECT", BS);
+    CFB(plaintext, key, iv, len);
+
+    return 0;
+}
